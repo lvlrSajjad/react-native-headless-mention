@@ -1,5 +1,5 @@
-import React, { type MutableRefObject, useMemo, useRef, useState } from 'react';
-import { type NativeSyntheticEvent, Text, TextInput, type TextInputSelectionChangeEventData, View } from 'react-native';
+import React, { type MutableRefObject, useMemo, useRef, useState, useEffect } from 'react';
+import { type NativeSyntheticEvent, Text, TextInput, type TextInputSelectionChangeEventData, View, Platform } from 'react-native';
 
 import {
 	generateValueFromPartsAndChangedText,
@@ -15,15 +15,15 @@ export type * from './lib/types';
 export * from './lib/utils';
 
 export function Input({
-	value,
-	onChange,
-	partTypes = [],
-	inputRef: propInputRef,
-	containerStyle,
-	onSelectionChange,
-	component: Component = TextInput,
-	...textInputProps
-}: MentionInputProps) {
+												value,
+												onChange,
+												partTypes = [],
+												inputRef: propInputRef,
+												containerStyle,
+												onSelectionChange,
+												component: Component = TextInput,
+												...textInputProps
+											}: MentionInputProps) {
 	const textInput = useRef<TextInput | null>(null);
 
 	const [selection, setSelection] = useState({ start: 0, end: 0 });
@@ -45,13 +45,32 @@ export function Input({
 		[parts, plainText, selection, partTypes],
 	);
 
+
 	const onSuggestionPress = (mentionType: MentionPartType) => (suggestion: Suggestion) => {
 		const newValue = generateValueWithAddedSuggestion(parts, mentionType, plainText, selection, suggestion);
-
 		if (!newValue) return;
 
 		onChange(newValue, parts);
+
 	};
+
+	useEffect(() => {
+		if (Platform.OS === 'ios') {
+			const newSelection = { start: plainText.length, end: plainText.length };
+			if (textInput.current) {
+				const plainTextParts = plainText.split(" ").filter(plainTextPart => plainTextPart !== "")
+				const lastPartIsMention = plainTextParts?.[plainTextParts.length-1]?.includes("@") || plainTextParts?.[plainTextParts.length-2]?.includes("@")
+
+				if (lastPartIsMention) {
+					textInput.current.setNativeProps({
+						selection: newSelection,
+					});
+				}
+
+			}
+		}
+	}, [plainText]);
+
 
 	const handleTextInputRef = (ref: TextInput) => {
 		textInput.current = ref;
