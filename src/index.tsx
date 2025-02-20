@@ -112,8 +112,7 @@ export function Input({
     if (Platform.OS === "ios") {
       const newSelection = { start: plainText.length, end: plainText.length }
       if (textInput.current) {
-        const plainTextParts = plainText.split(" ").filter(plainTextPart => plainTextPart !== "")
-        const lastPartIsMention = plainTextParts?.[plainTextParts.length - 1]?.includes("@") || plainTextParts?.[plainTextParts.length - 2]?.includes("@")
+        const lastPartIsMention = parts.length >= 2 && parts[parts.length - 2].partType
 
         if (lastPartIsMention) {
           textInput.current.setNativeProps({
