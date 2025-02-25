@@ -92,6 +92,9 @@ export function Input({
   }
 
   const onChangeInput = (changedText: string) => {
+    console.log('mention.remove.onChangeInput', changedText)
+    console.log('mention.remove.onChange', ...generateValueFromPartsAndChangedText(parts, plainText, changedText))
+
     onChange(...generateValueFromPartsAndChangedText(parts, plainText, changedText))
   }
 
@@ -118,9 +121,38 @@ export function Input({
 
       // Compare the previous and current values.
       if (prevPlainText !== plainText || prevParts !== parts) {
-        console.log("mention.prev.Previous values:", {prevPlainText, prevParts})
-        console.log("mention.prev.Current values:", { plainText, parts })
-        // Do your comparison logic here.
+        console.log("mention.remove.Previous values:", {prevPlainText, prevParts})
+        console.log("mention.remove.Current values:", { plainText, parts })
+
+        // Find all mention parts in previous and current parts arrays.
+        const prevMentions = prevParts.filter(part => part.partType);
+        const currentMentions = parts.filter(part => part.partType);
+
+        // Determine which mentions have been removed.
+        // (This assumes that each mention part has a unique data.id.)
+        const removedMentions = prevMentions.filter(
+          prevMention => !currentMentions.some(currMention => currMention.data.id === prevMention.data.id)
+        );
+
+        console.log('mention.remove.removedMentions', removedMentions)
+
+        let newValue = plainText;
+
+        // If any mention was removed, trigger the removal callback.
+        removedMentions.forEach(mention => {
+          newValue = newValue.replace(mention.text.trim(), "").trimStart();
+          newValue = newValue.replace(mention.text.slice(0, mention.text.length - 2).trim(), "").trimStart();
+
+          // console.log("mention.remove.newValueAfterDelete", newValue);
+          onMentionRemove(mention);
+        });
+
+        if (removedMentions && removedMentions.length > 0) {
+          onChangeInput(newValue);
+
+        }
+
+
       }
 
       const newSelection = { start: plainText.length, end: plainText.length }
@@ -154,22 +186,22 @@ export function Input({
     }
   }
 
-  const handleKeyPress = (event: any) => {
-    console.log("mention.handleKeyPress")
-    if (event.nativeEvent.key === "Backspace" && selection.start === selection.end) {
-      console.log("mention.Backspace pressed, selection:", selection.start)
-
-      // Check if backspace will delete a mention
-      const mentionToDelete = parts.find(
-        (part) => part.partType && selection.start - 1 >= part.position.start && selection.start - 1 <= part.position.end,
-      )
-
-      if (mentionToDelete) {
-        console.log("mention.Deleting mention:", mentionToDelete)
-        onMentionRemove && onMentionRemove(mentionToDelete)
-      }
-    }
-  }
+  // const handleKeyPress = (event: any) => {
+  //   console.log("mention.handleKeyPress")
+  //   if (event.nativeEvent.key === "Backspace" && selection.start === selection.end) {
+  //     console.log("mention.Backspace pressed, selection:", selection.start)
+  //
+  //     // Check if backspace will delete a mention
+  //     const mentionToDelete = parts.find(
+  //       (part) => part.partType && selection.start - 1 >= part.position.start && selection.start - 1 <= part.position.end,
+  //     )
+  //
+  //     if (mentionToDelete) {
+  //       console.log("mention.Deleting mention:", mentionToDelete)
+  //       onMentionRemove && onMentionRemove(mentionToDelete)
+  //     }
+  //   }
+  // }
 
   const renderMentionSuggestions = (mentionType: MentionPartType) => (
     <React.Fragment key={mentionType.trigger}>
@@ -202,7 +234,7 @@ export function Input({
         onChangeText={onChangeInput}
         onSelectionChange={handleSelectionChange}
         selection={selection}
-        onKeyPress={handleKeyPress}
+        // onKeyPress={handleKeyPress}
       >
         <Text>
           {parts.map(({ text, partType, data }, index) =>
