@@ -49,7 +49,7 @@ export function Input({
 
     // Approximate caret position
     const fontSize = 14 // Default font size
-    const charWidth = fontSize * 0.44 // Adjusted for AmericanGrotesk-Regular
+    const charWidth = fontSize * 0.46 // Adjusted for AmericanGrotesk-Regular
     const lineHeight = fontSize * 1.2 // Default line height
     console.log("mention.containerWidth", containerWidth)
     const charsPerLine = Math.floor(containerWidth / charWidth) // Dynamic calculation
