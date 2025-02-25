@@ -41,36 +41,38 @@ export function Input({
 
   const { plainText, parts } = useMemo(() => parseValue(value, partTypes), [value, partTypes])
 
+  const prevValuesRef = useRef({ plainText, parts })
+
   const handleSelectionChange = (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
     const sel = event.nativeEvent.selection
     setSelection(sel)
 
     // Approximate caret position
-    const fontSize = 14; // Default font size
-    const charWidth = fontSize * 0.52; // Adjusted for AmericanGrotesk-Regular
-    const lineHeight = fontSize * 1.2; // Default line height
-    console.log('mention.containerWidth', containerWidth)
-    const charsPerLine = Math.floor(containerWidth / charWidth); // Dynamic calculation
+    const fontSize = 14 // Default font size
+    const charWidth = fontSize * 0.52 // Adjusted for AmericanGrotesk-Regular
+    const lineHeight = fontSize * 1.2 // Default line height
+    console.log("mention.containerWidth", containerWidth)
+    const charsPerLine = Math.floor(containerWidth / charWidth) // Dynamic calculation
 
-    const lineNumber = Math.floor(sel.start / charsPerLine);
-    const charPositionInLine = sel.start % charsPerLine;
+    const lineNumber = Math.floor(sel.start / charsPerLine)
+    const charPositionInLine = sel.start % charsPerLine
 
-    const caretX = charPositionInLine * charWidth;
-    const caretY = lineNumber * lineHeight;
+    const caretX = charPositionInLine * charWidth
+    const caretY = lineNumber * lineHeight
 
-    console.log('mention.caretLayout', { x: caretX, y: caretY });
+    console.log("mention.caretLayout", { x: caretX, y: caretY })
 
     // Check if caret is inside a mention part by iterating over parts.
-    let foundIndex: number | null = null;
+    let foundIndex: number | null = null
     for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
+      const part = parts[i]
       if (
         part.partType &&
         sel.start >= part.position.start &&
         sel.start <= part.position.end
       ) {
-        foundIndex = i;
-        break;
+        foundIndex = i
+        break
       }
     }
 
@@ -80,11 +82,10 @@ export function Input({
         mention: parts[foundIndex],
         index: foundIndex,
         layout: { x: caretX, y: caretY },
-      });
+      })
     } else {
-      onMentionSelected && onMentionSelected(null);
+      onMentionSelected && onMentionSelected(null)
     }
-
 
 
     onSelectionChange?.(event)
@@ -109,20 +110,39 @@ export function Input({
   }
 
   useEffect(() => {
-    if (Platform.OS === "ios") {
-      const newSelection = { start: (plainText ?? "").trim().length, end: (plainText ?? "").trim().length }
+    const {parts: prevParts, plainText: prevPlainText} = prevValuesRef.current
+    console.log('mention.prev', prevParts, prevPlainText)
+
+    if (Platform.OS === "ios" && prevPlainText !== plainText) {
+
+
+      // Compare the previous and current values.
+      if (prevPlainText !== plainText || prevParts !== parts) {
+        console.log("mention.prev.Previous values:", {prevPlainText, prevParts})
+        console.log("mention.prev.Current values:", { plainText, parts })
+        // Do your comparison logic here.
+      }
+
+      const newSelection = { start: plainText.length, end: plainText.length }
       if (textInput.current) {
         const lastPartIsMention = parts.length >= 2 && parts[parts.length - 2].partType
 
-        if (lastPartIsMention) {
+        console.log('mention.prevPlainText', prevPlainText)
+        const lengthDifference = Math.abs(plainText.length - (prevPlainText ? prevPlainText.length : 0));
+
+        if (lengthDifference >= 5) {
           textInput.current.setNativeProps({
             selection: newSelection,
           })
         }
 
+
       }
     }
-  }, [plainText])
+
+    prevValuesRef.current = { plainText, parts };
+
+  }, [plainText, parts])
 
 
   const handleTextInputRef = (ref: TextInput) => {
@@ -135,18 +155,18 @@ export function Input({
   }
 
   const handleKeyPress = (event: any) => {
-    console.log('mention.handleKeyPress')
-    if (event.nativeEvent.key === 'Backspace' && selection.start === selection.end) {
+    console.log("mention.handleKeyPress")
+    if (event.nativeEvent.key === "Backspace" && selection.start === selection.end) {
       console.log("mention.Backspace pressed, selection:", selection.start)
 
       // Check if backspace will delete a mention
       const mentionToDelete = parts.find(
-        (part) => part.partType && selection.start - 1 >= part.position.start && selection.start - 1 <= part.position.end
-      );
+        (part) => part.partType && selection.start - 1 >= part.position.start && selection.start - 1 <= part.position.end,
+      )
 
       if (mentionToDelete) {
-        console.log('mention.Deleting mention:', mentionToDelete);
-        onMentionRemove && onMentionRemove(mentionToDelete);
+        console.log("mention.Deleting mention:", mentionToDelete)
+        onMentionRemove && onMentionRemove(mentionToDelete)
       }
     }
   }
@@ -161,50 +181,50 @@ export function Input({
   )
 
   return (
-      <View style={containerStyle} onLayout={(e)=> {
-        if (e.nativeEvent.layout.width > 0) {
-          containerWidth = e.nativeEvent.layout.width
-        }
-      }}>
-        {(
-          partTypes.filter(
-            (one) =>
-              isMentionPartType(one) &&
-              one.renderSuggestions &&
-              (!one.renderPosition || one.renderPosition === "top"),
-          ) as MentionPartType[]
-        ).map(renderMentionSuggestions)}
+    <View style={containerStyle} onLayout={(e) => {
+      if (e.nativeEvent.layout.width > 0) {
+        containerWidth = e.nativeEvent.layout.width
+      }
+    }}>
+      {(
+        partTypes.filter(
+          (one) =>
+            isMentionPartType(one) &&
+            one.renderSuggestions &&
+            (!one.renderPosition || one.renderPosition === "top"),
+        ) as MentionPartType[]
+      ).map(renderMentionSuggestions)}
 
-        <Component
-          multiline
-          {...textInputProps}
-          ref={handleTextInputRef}
-          onChangeText={onChangeInput}
-          onSelectionChange={handleSelectionChange}
-          selection={selection}
-          onKeyPress={handleKeyPress}
-        >
-          <Text>
-            {parts.map(({ text, partType, data }, index) =>
-              partType ? (
-                <Text key={`${index}-${data?.trigger ?? "pattern"}`} style={partType.textStyle} onPress={
-                  ()=>console.log('mention.onPress', {text, partType, data})
-                }
-                      >
-                  {text}
-                </Text>
-              ) : (
-                <Text key={index}>{text}</Text>
-              ),
-            )}
-          </Text>
-        </Component>
+      <Component
+        multiline
+        {...textInputProps}
+        ref={handleTextInputRef}
+        onChangeText={onChangeInput}
+        onSelectionChange={handleSelectionChange}
+        selection={selection}
+        onKeyPress={handleKeyPress}
+      >
+        <Text>
+          {parts.map(({ text, partType, data }, index) =>
+            partType ? (
+              <Text key={`${index}-${data?.trigger ?? "pattern"}`} style={partType.textStyle} onPress={
+                () => console.log("mention.onPress", { text, partType, data })
+              }
+              >
+                {text}
+              </Text>
+            ) : (
+              <Text key={index}>{text}</Text>
+            ),
+          )}
+        </Text>
+      </Component>
 
-        {(
-          partTypes.filter(
-            (one) => isMentionPartType(one) && one.renderSuggestions && one.renderPosition === "bottom",
-          ) as MentionPartType[]
-        ).map(renderMentionSuggestions)}
-      </View>
+      {(
+        partTypes.filter(
+          (one) => isMentionPartType(one) && one.renderSuggestions && one.renderPosition === "bottom",
+        ) as MentionPartType[]
+      ).map(renderMentionSuggestions)}
+    </View>
   )
 }
