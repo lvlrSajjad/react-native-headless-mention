@@ -141,8 +141,8 @@ export function Input({
         // If any mention was removed, trigger the removal callback.
         removedMentions.forEach(mention => {
           newValue = newValue.replace(mention.text.trim(), "").trimStart();
+          newValue = newValue.replace(mention.text.slice(0, mention.text.length - 1).trim(), "").trimStart();
           newValue = newValue.replace(mention.text.slice(0, mention.text.length - 2).trim(), "").trimStart();
-
           // console.log("mention.remove.newValueAfterDelete", newValue);
           onMentionRemove(mention);
         });
