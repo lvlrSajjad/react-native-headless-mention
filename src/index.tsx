@@ -110,7 +110,7 @@ export function Input({
 
   useEffect(() => {
     if (Platform.OS === "ios") {
-      const newSelection = { start: plainText.length, end: plainText.length }
+      const newSelection = { start: (plainText ?? "").trim().length, end: (plainText ?? "").trim().length }
       if (textInput.current) {
         const lastPartIsMention = parts.length >= 2 && parts[parts.length - 2].partType
 
