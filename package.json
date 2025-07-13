@@ -66,10 +66,11 @@
 		"vitest": "^2.1.9"
 	},
 	"files": [
-		"dist/**/*.js*",
-		"dist/**/*.mjs*",
-		"dist/**/*.d*"
-	],
+  "dist/**/*.js*",
+  "dist/**/*.mjs*",
+  "dist/**/*.d*",
+  "src/**/*"
+],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/imranbarbhuiya/react-native-headless-mention.git"
