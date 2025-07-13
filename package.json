@@ -21,7 +21,7 @@
 		"update": "yarn upgrade-interactive",
 		"typecheck": "tsc -p tsconfig.eslint.json",
 		"bump": "cliff-jumper",
-		"check-update": "cliff-jumper --dry-run",
+		"check-update": "cliff-jumper --dry-run"
 	},
 	"keywords": [
 		"react native",
