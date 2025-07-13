@@ -19,12 +19,9 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"update": "yarn upgrade-interactive",
-		"build": "tsup",
 		"typecheck": "tsc -p tsconfig.eslint.json",
 		"bump": "cliff-jumper",
 		"check-update": "cliff-jumper --dry-run",
-		"prepack": "yarn build && pinst --disable",
-		"postpack": "pinst --enable"
 	},
 	"keywords": [
 		"react native",
